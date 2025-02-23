@@ -838,7 +838,7 @@ int json_walk_args(const char *json_string, int json_string_length,
   frozen->cur = json_string;
 
   if (args == NULL) {
-    frozen->limit = INT_MAX;
+    frozen->limit = JSON_MAX_DEPTH;
   } else {
     frozen->callback = args->callback;
     frozen->callback_data = args->callback_data;
@@ -847,7 +847,7 @@ int json_walk_args(const char *json_string, int json_string_length,
 
   TRY(json_doit(frozen));
 
-  assert(frozen->limit == (args ? args->limit : INT_MAX));
+  assert(frozen->limit == (args ? args->limit : JSON_MAX_DEPTH));
 
   return (frozen->cur - json_string);
 }
@@ -1409,12 +1409,14 @@ struct next_data {
 
 static void next_set_key(struct next_data *d, const char *name, int name_len,
                          int is_array) {
+  if (name == NULL || name_len < 0) return;
   if (is_array) {
     /* Array. Set index and reset key  */
     if (d->key != NULL) {
       d->key->len = 0;
       d->key->ptr = NULL;
     }
+
     if (d->idx != NULL) *d->idx = atoi(name);
   } else {
     /* Object. Set key and make index -1 */
